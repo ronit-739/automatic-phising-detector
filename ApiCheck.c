@@ -15,7 +15,7 @@ int ApiCheck(char *url_to_check)
     CURL *curl;
     CURLcode res;
     char response[BUFFER_SIZE] = "";
-    char *api_key = "AIzaSyBnuNzvutml8e6pYJ6GWkwtM_MWCaPVoU8";
+    char *api_key = "";
     char api_url[256] = "https://safebrowsing.googleapis.com/v4/threatMatches:find?key=";
     strcat(api_url, api_key);
     char post_data[500];
