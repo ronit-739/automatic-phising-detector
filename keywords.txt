@@ -1,0 +1,63 @@
+login
+signin
+register
+password
+username
+credentials
+profile
+security
+authentication
+verification
+confirmation
+reset
+recover
+change password
+reward
+prize
+bonus
+discount
+offer
+deal
+cash
+win
+winner
+claim
+lottery
+raffle
+voucher
+coupon
+gift
+free
+account
+bet
+iphone
+creditcard
+cvv
+expiry
+billing
+payment
+invoice
+refund
+transaction
+balance
+transfer
+withdraw
+deposit
+urgent
+immediate
+action required
+alert
+warning
+critical
+important
+verify now
+update now
+confirm now
+reactivate
+suspended
+locked
+closed
+expired
+terminated
+restricted
+update
