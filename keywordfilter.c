@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
-#include <stdlib.h>  
+#include <stdlib.h>
 
 // Function to extract domain from a URL
 void extract_domain(char *url, char *domain) {
@@ -41,8 +41,7 @@ void url_decode(char *src, char *dest) {
 // Function to check for suspicious keywords
 int keywordcontent(char *text, char **keywords, int numkeywords) {
     for (int i = 0; i < numkeywords; i++) {
-        if (strstr(text, keywords[i]))
-        {
+        if (strstr(text, keywords[i])) {
             return 1;  // Found suspicious keyword
         }
     }
@@ -55,12 +54,12 @@ int is_punycode_encoded(char *domain) {
     return (strstr(domain, "xn--") != NULL);
 }
 
-// Function to filter out special characters (e.g., '@')
-void filter_special_chars(char *str, char special_char) {
+// Function to filter out special characters (e.g., '@', '#', '$', '%', '^', etc.)
+void filter_special_chars(char *str, const char *special_chars) {
     int i, j = 0;
     for (i = 0; str[i] != '\0'; i++) {
-        // If the current character is not the special character, keep it
-        if (str[i] != special_char) {
+        // If the current character is not in the special_chars string, keep it
+        if (!strchr(special_chars, str[i])) {
             str[j++] = str[i];
         }
     }
@@ -111,3 +110,4 @@ int read_keywords_from_file(const char *filename, char ***keywords) {
     fclose(file);
     return count;
 }
+

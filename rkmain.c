@@ -15,8 +15,8 @@ int main() {
     // Decode any percent-encoded characters in domain
     url_decode(domain, decoded_domain);
 
-    // Filter out special characters like '@'
-    filter_special_chars(decoded_domain, '@');
+    // Filter out special characters like '@', '#', '$', '%', '^', etc.
+    filter_special_chars(decoded_domain, "@#$%^&*()+=-[]\\\';,/{}|\":<>?~_");
 
     printf("Extracted Domain: %s\n", decoded_domain);  // Debugging Output
 
