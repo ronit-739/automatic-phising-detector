@@ -4,7 +4,8 @@ int main()
 {
 
 
-printf("hello");
+printf("hello\n");
+printf("helooooo2");
 
 
     return 0;
