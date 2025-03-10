@@ -1,0 +1,181 @@
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+#include <stdlib.h>
+#include <math.h>
+
+#define MAX_URL_LENGTH 1024
+#define BLACKLIST_FILE "blacklist.txt"
+#define LOG_FILE "url_analysis_log.txt"
+#define MAX_BLACKLIST_SIZE 100
+
+// Function prototypes
+int isBlacklisted(const char *url);
+int checkSuspiciousPatterns(const char *url);
+int checkURLLength(const char *url);
+int checkHTTPS(const char *url);
+int checkUncommonTLD(const char *url);
+int checkIPAddressInURL(const char *url);
+float calculateHeuristicScore(const char *url);
+void logAnalysisResult(const char *url, float securityPercentage, const char *verdict);
+
+int main() {
+    char url[MAX_URL_LENGTH];
+    int checksPassed = 0, totalChecks = 6;
+
+    // Step 1: Input URL
+    printf("Enter the URL to check: ");
+    fgets(url, MAX_URL_LENGTH, stdin);
+    url[strcspn(url, "\n")] = '\0'; // Remove trailing newline
+
+    // Step 2: Perform checks
+    if (!isBlacklisted(url)) {
+        printf("Check 1: URL is not blacklisted.\n");
+        checksPassed++;
+    } else {
+        printf("Check 1: URL is blacklisted!\n");
+    }
+
+    if (!checkSuspiciousPatterns(url)) {
+        printf("Check 2: No suspicious patterns detected.\n");
+        checksPassed++;
+    } else {
+        printf("Check 2: Suspicious patterns detected!\n");
+    }
+
+    if (checkURLLength(url)) {
+        printf("Check 3: URL length is acceptable.\n");
+        checksPassed++;
+    } else {
+        printf("Check 3: URL length is too long!\n");
+    }
+
+    if (checkHTTPS(url)) {
+        printf("Check 4: HTTPS is present.\n");
+        checksPassed++;
+    } else {
+        printf("Check 4: HTTPS is missing!\n");
+    }
+
+    if (!checkUncommonTLD(url)) {
+        printf("Check 5: TLD is common.\n");
+        checksPassed++;
+    } else {
+        printf("Check 5: Uncommon TLD detected!\n");
+    }
+
+    if (!checkIPAddressInURL(url)) {
+        printf("Check 6: No IP address in URL.\n");
+        checksPassed++;
+    } else {
+        printf("Check 6: IP address detected in URL!\n");
+    }
+
+    // Step 3: Calculate heuristic score
+    float heuristicScore = calculateHeuristicScore(url);
+    printf("\nHeuristic Security Score: %.2f%%\n", heuristicScore);
+
+    // Step 4: Final verdict
+    const char *verdict = (heuristicScore >= 75) ? "Safe" : "Unsafe";
+    printf("Verdict: %s\n", verdict);
+
+    // Step 5: Log the result
+    logAnalysisResult(url, heuristicScore, verdict);
+
+    return 0;
+}
+
+// Function to check if the URL is in the blacklist
+int isBlacklisted(const char *url) {
+    FILE *file = fopen(BLACKLIST_FILE, "r");
+    if (!file) {
+        printf("Error: Could not open blacklist file.\n");
+        return 0;
+    }
+
+    char line[MAX_URL_LENGTH];
+    while (fgets(line, MAX_URL_LENGTH, file)) {
+        line[strcspn(line, "\n")] = '\0'; // Remove trailing newline
+        if (strstr(url, line)) {
+            fclose(file);
+            return 1; // URL is blacklisted
+        }
+    }
+
+    fclose(file);
+    return 0; // URL is not blacklisted
+}
+
+// Function to check for suspicious patterns in the URL
+int checkSuspiciousPatterns(const char *url) {
+    const char *patterns[] = {"@@", "//", "..", ".exe", ".php"};
+    int numPatterns = sizeof(patterns) / sizeof(patterns[0]);
+
+    for (int i = 0; i < numPatterns; i++) {
+        if (strstr(url, patterns[i])) {
+            return 1; // Suspicious pattern found
+        }
+    }
+
+    return 0; // No suspicious patterns
+}
+
+// Function to check the length of the URL
+int checkURLLength(const char *url) {
+    int length = strlen(url);
+    return (length <= 100); // URLs longer than 100 characters are suspicious
+}
+
+// Function to check if the URL uses HTTPS
+int checkHTTPS(const char *url) {
+    return (strstr(url, "https://") != NULL); // HTTPS is present
+}
+
+// Function to check for uncommon TLDs
+int checkUncommonTLD(const char *url) {
+    const char *commonTLDs[] = {".com", ".org", ".net", ".edu", ".gov"};
+    int numTLDs = sizeof(commonTLDs) / sizeof(commonTLDs[0]);
+
+    for (int i = 0; i < numTLDs; i++) {
+        if (strstr(url, commonTLDs[i])) {
+            return 0; // Common TLD found
+        }
+    }
+
+    return 1; // Uncommon TLD
+}
+
+// Function to check for IP addresses in the URL
+int checkIPAddressInURL(const char *url) {
+    return (strstr(url, "http://") && strstr(url, ".")) || (strstr(url, "https://") && strstr(url, "."));
+}
+
+// Function to calculate heuristic score
+float calculateHeuristicScore(const char *url) {
+    float score = 100.0;
+
+    if (isBlacklisted(url)) score -= 25.0;
+    if (checkSuspiciousPatterns(url)) score -= 15.0;
+    if (!checkURLLength(url)) score -= 10.0;
+    if (!checkHTTPS(url)) score -= 20.0;
+    if (checkUncommonTLD(url)) score -= 15.0;
+    if (checkIPAddressInURL(url)) score -= 15.0;
+
+    return (score < 0) ? 0 : score; // Ensure score is not negative
+}
+
+// Function to log analysis results
+void logAnalysisResult(const char *url, float securityPercentage, const char *verdict) {
+    FILE *logFile = fopen(LOG_FILE, "a");
+    if (!logFile) {
+        printf("Error: Could not open log file.\n");
+        return;
+    }
+
+    fprintf(logFile, "URL: %s\n", url);
+    fprintf(logFile, "Security Percentage: %.2f%%\n", securityPercentage);
+    fprintf(logFile, "Verdict: %s\n", verdict);
+    fprintf(logFile, "----------------------------------------\n");
+
+    fclose(logFile);
+}
