@@ -1,3 +1,4 @@
+#include "keywordfilter.c"
 int main()
 {
     char url[256], domain[256], decoded_domain[256];
