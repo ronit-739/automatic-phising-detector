@@ -1,65 +1,83 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "levenshtein.h"
+struct result
+{
+    int ld;
+    char matching_url[100];
+};
 
-int min_length(int x, int y, int z) {
-    if (x < y && x < z) {
+int edit_distance(char[100], char[100]);
+int min_length(int, int, int);
+struct result check_edit_distance(char[100]);
+
+int min_length(int x, int y, int z)
+{
+    if (x < y && x < z)
+    {
         return x;
     }
-    if (y < z) {
+    if (y < z)
+    {
         return y;
-    } else {
+    }
+    else
+    {
         return z;
     }
 }
 
-
-
-
-int edit_distance(char string1[100], char string2[100]) {
+int edit_distance(char string1[100], char string2[100])
+{
     int i, j;
     int l1 = strlen(string1);
     int l2 = strlen(string2);
     int matrix[l1 + 1][l2 + 1];
-
-    // Initialize the matrix with base cases
-    for (i = 0; i <= l1; i++) {
+    for (i = 0; i <= l1; i++)
+    {
         matrix[i][0] = i;
     }
 
-    for (j = 0; j <= l2; j++) {
+    for (j = 0; j <= l2; j++)
+    {
         matrix[0][j] = j;
     }
-
-    // Fill the matrix with Levenshtein distance calculation
-    for (i = 1; i <= l1; i++) {
-        for (j = 1; j <= l2; j++) {
-            if (string1[i - 1] == string2[j - 1]) {
+    for (i = 1; i <= l1; i++)
+    {
+        for (j = 1; j <= l2; j++)
+        {
+            if (string1[i - 1] == string2[j - 1])
+            {
                 matrix[i][j] = matrix[i - 1][j - 1];
-            } else {
+            }
+            else
+            {
                 matrix[i][j] = 1 + min_length(matrix[i - 1][j - 1], matrix[i - 1][j], matrix[i][j - 1]);
             }
         }
     }
-    return matrix[l1][l2];  // Return the Levenshtein distance
+    return matrix[l1][l2];
 }
 
- struct result check_edit_distance(char word1[]) {
+struct result check_edit_distance(char word1[])
+{
     struct result res;
-    res.ld = 100;  
-    res.matching_url[0] = '\0';  // Initialize empty string
+    res.ld = 100;
+    res.matching_url[0] = '\0';
 
-    FILE *fp = fopen("safe_url.txt", "r");  
-    if (!fp) {
+    FILE *fp = fopen("safe_url.txt", "r");
+    if (!fp)
+    {
         printf("Error: safe_url.txt not found\n");
         return res;
     }
 
-    char safe_domain[100];  
-    while (fscanf(fp, "%s", safe_domain) != EOF) {
+    char safe_domain[100];
+    while (fscanf(fp, "%s", safe_domain) != EOF)
+    {
         int distance = edit_distance(word1, safe_domain);
-        if (distance < res.ld) {
+        if (distance < res.ld)
+        {
             res.ld = distance;
             strcpy(res.matching_url, safe_domain);
         }
@@ -67,6 +85,3 @@ int edit_distance(char string1[100], char string2[100]) {
     fclose(fp);
     return res;
 }
-
-
-
