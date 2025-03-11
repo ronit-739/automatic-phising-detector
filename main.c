@@ -3,8 +3,8 @@
 #include "blacklist.c"
 #include "URL.c"
 #include "ApiCheck.c"
+#include "keywordfilter.c"
 int count = 0;
-int total_function = 2;
 
 int main()
 {
@@ -12,13 +12,22 @@ int main()
     char protocol[10];
     char sub_domain[5];
     char domain[200];
+    char tl_domain[10];
     float percentage = 30;
-    const char *api_key = "";
-    //   AIzaSyCMqA6MwJ1e22meqSOKkISdtZIte9u7psA
+    const char *api_key = "AIzaSyCMqA6MwJ1e22meqSOKkISdtZIte9u7psA";
+    int sus = 0;
     printf("Enter a URL: ");
     scanf("%s", url);
     extract_protocol(url, protocol);
-    extract_sub_domain_and_domain(url, sub_domain, domain);
+    extract_sub_domain_and_domain_and_tldomain(url, sub_domain, domain, tl_domain);
+    if (strcmp(protocol, "https:") == 0)
+    {
+        count += 0.4;
+    }
+    if (strcmp(sub_domain, "www") == 0)
+    {
+        count += 0.6;
+    }
     struct result res = check_edit_distance(domain);
     printf("\n\n----------First test--------------\n");
     printf("Levenshtein distance: %d\n", res.ld);
@@ -32,7 +41,7 @@ int main()
     {
         printf("Suspicious URL detected!\n");
         printf("Matching safe URL: %s\n", res.matching_url);
-        count++;
+        count += 1.2;
     }
     else
     {
@@ -42,25 +51,39 @@ int main()
     printf("\n\n------------Second Test------------\n");
     if (!isBlacklisted(domain))
     {
-        printf("URL is NOT in the blacklist\n");
+        printf("URL is NOT in our blacklist\n");
     }
     else
     {
-        printf("URL is in the blacklist!\n");
-        count++;
+        printf("URL is in our blacklist!\n");
+        count += 1.5;
     }
 
     printf("\n\n------------Third Test------------\n");
     if (check_phishing_site(url, api_key))
     {
-        count++;
+        count = 1.8;
         printf("URL is blacklisted by google.\n");
     }
     else
     {
         printf("URL is not blacklisted by google\n");
     }
-    percentage = (float)count / total_function * 100;
+
+    printf("\n\n------------Fourth Test------------\n");
+    sus = siteCheck(domain);
+    if (sus > 3)
+    {
+        printf("Potential fraud site");
+        count += 1.5;
+    }
+    else
+    {
+        printf("Safe site");
+    }
+
+    printf("\n\n---------------------------------------------");
+    percentage = (float)count / 7 * 100;
 
     if (percentage > 0 && percentage <= 30)
     {
@@ -76,8 +99,13 @@ int main()
     {
         printf("\nHigh Risk\n");
     }
-    printf("---------------------------------------------");
-    printf("\ngiven url has  %.2f %% chance of being a phising url\n ", percentage);
-
+    printf("\nUnsafe percentage: %.2f %% \n ", percentage);
+    if (percentage > 15)
+    {
+        FILE *fp = fopen("blacklist.txt", "a");
+        strcat(domain, tl_domain);
+        fprintf(fp, "\n%s", domain);
+        fclose(fp);
+    }
     return 0;
 }

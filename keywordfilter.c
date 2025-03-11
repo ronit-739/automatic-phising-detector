@@ -2,32 +2,13 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
-void extract_domain(char *url, char *domain)
-{
-    char *start = url;
-    if (strncmp(url, "http://", 7) == 0)
-    {
-        start += 7;
-    }
-    else if (strncmp(url, "https://", 8) == 0)
-    {
-        start += 8;
-    }
-    char *end = strchr(start, '/');
-    if (end != NULL)
-    {
-        *end = '\0';
-    }
-    strcpy(domain, start);
-}
-
-// Function to decode percent-encoded URLs
-void url_decode(char *src, char *dest)
+void url_decode(char *src, char *dest, int *sus)
 {
     while (*src)
     {
         if (*src == '%' && isxdigit(*(src + 1)) && isxdigit(*(src + 2)))
         {
+            *sus += 1;
             char hex[3] = {src[1], src[2], '\0'};
             *dest++ = (char)strtol(hex, NULL, 16);
             src += 3;
@@ -40,53 +21,40 @@ void url_decode(char *src, char *dest)
     *dest = '\0';
 }
 
-// Function to check for suspicious keywords
-int keywordcontent(char *text, char **keywords, int numkeywords)
+int keywordcontent(char *text, char **keywords, int numkeywords, int *sus)
 {
     for (int i = 0; i < numkeywords; i++)
     {
         if (strstr(text, keywords[i]))
         {
-            return 1; // Found suspicious keyword
+            *sus += 1;
         }
     }
-    return 0;
 }
 
-// Function to check for Punycode-encoded domains
-int is_punycode_encoded(char *domain)
+int is_punycode_encoded(char *domain, int *sus)
 {
-    // Punycode-encoded domains start with "xn--"
-    return (strstr(domain, "xn--") != NULL);
+    if (strstr(domain, "xn--") != NULL)
+    {
+        *sus += 3;
+    }
 }
 
-// Function to filter out special characters (e.g., '@', '#', '$', '%', '^', etc.)
-void filter_special_chars(char *str, const char *special_chars)
+void filter_special_chars(char *str, const char *special_chars, int *sus)
 {
-    int i, j = 0;
+    int i;
     for (i = 0; str[i] != '\0'; i++)
     {
-        // If the current character is not in the special_chars string, keep it
-        if (!strchr(special_chars, str[i]))
+        if (strchr(special_chars, str[i]))
         {
-            str[j++] = str[i];
+            *sus += 1;
         }
     }
-    // Null-terminate the filtered string
-    str[j] = '\0';
 }
 
-// Function to read keywords from a file
 int read_keywords_from_file(const char *filename, char ***keywords)
 {
     FILE *file = fopen(filename, "r");
-    if (!file)
-    {
-        perror("Failed to open keywords file");
-        return -1;
-    }
-
-    // Count the number of keywords
     int count = 0;
     char buffer[256];
     while (fgets(buffer, sizeof(buffer), file))
@@ -94,34 +62,35 @@ int read_keywords_from_file(const char *filename, char ***keywords)
         count++;
     }
 
-    // Allocate memory for keywords array
     *keywords = (char **)malloc(count * sizeof(char *));
-    if (!*keywords)
-    {
-        perror("Failed to allocate memory for keywords");
-        fclose(file);
-        return -1;
-    }
-
-    // Reset file pointer to the beginning
     rewind(file);
 
-    // Read keywords into the array
     int index = 0;
     while (fgets(buffer, sizeof(buffer), file))
     {
-        // Remove newline character
         buffer[strcspn(buffer, "\n")] = '\0';
         (*keywords)[index] = strdup(buffer);
-        if (!(*keywords)[index])
-        {
-            perror("Failed to allocate memory for keyword");
-            fclose(file);
-            return -1;
-        }
         index++;
     }
 
     fclose(file);
     return count;
+}
+
+int siteCheck(char domain[200])
+{
+    int sus = 0;
+    char decoded_domain[200];
+    char **keywords;
+    int num = read_keywords_from_file("keywords.txt", &keywords);
+    url_decode(domain, decoded_domain, &sus);
+    filter_special_chars(decoded_domain, "@#$%^&*()+=-[]\\\';,/{}|\":<>?~_", &sus);
+    is_punycode_encoded(decoded_domain, &sus);
+    keywordcontent(decoded_domain, keywords, num, &sus);
+    for (int i = 0; i < num; i++)
+    {
+        free(keywords[i]);
+    }
+    free(keywords);
+    return sus;
 }
