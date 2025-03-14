@@ -4,15 +4,17 @@
 #include "URL.c"
 #include "ApiCheck.c"
 #include "keywordfilter.c"
-int count = 0;
 
 int main()
 {
+    float count = 0;
     char url[MAX_URL_LENGTH];
     char protocol[10];
     char sub_domain[5];
     char domain[200];
+    char alldomain[200];
     char tl_domain[10];
+    char web[200];
     float percentage = 30;
     const char *api_key = "AIzaSyCMqA6MwJ1e22meqSOKkISdtZIte9u7psA";
     int sus = 0;
@@ -20,11 +22,13 @@ int main()
     scanf("%s", url);
     extract_protocol(url, protocol);
     extract_sub_domain_and_domain_and_tldomain(url, sub_domain, domain, tl_domain);
-    if (strcmp(protocol, "https:") == 0)
+    strcpy(alldomain, domain);
+    strcat(alldomain, tl_domain);
+    if (strcmp(protocol, "https:") != 0)
     {
         count += 0.4;
     }
-    if (strcmp(sub_domain, "www") == 0)
+    if (strcmp(sub_domain, "www") != 0)
     {
         count += 0.6;
     }
@@ -49,7 +53,7 @@ int main()
     }
 
     printf("\n\n------------Second Test------------\n");
-    if (!isBlacklisted(domain))
+    if (!isBlacklisted(alldomain))
     {
         printf("URL is NOT in our blacklist\n");
     }
@@ -62,7 +66,7 @@ int main()
     printf("\n\n------------Third Test------------\n");
     if (check_phishing_site(url, api_key))
     {
-        count = 1.8;
+        count += 1.8;
         printf("URL is blacklisted by google.\n");
     }
     else
@@ -81,7 +85,6 @@ int main()
     {
         printf("Safe site");
     }
-
     printf("\n\n---------------------------------------------");
     percentage = (float)count / 7 * 100;
 
@@ -100,11 +103,17 @@ int main()
         printf("\nHigh Risk\n");
     }
     printf("\nUnsafe percentage: %.2f %% \n ", percentage);
-    if (percentage > 15)
+    if (percentage > 20)
     {
-        FILE *fp = fopen("blacklist.txt", "a");
-        strcat(domain, tl_domain);
-        fprintf(fp, "\n%s", domain);
+        FILE *fp = fopen("blacklists.txt", "a+");
+        while (fscanf(fp, "%s", web) != EOF)
+        {
+            if (strcmp(web, alldomain) == 0)
+            {
+                return 0;
+            }
+        }
+        fprintf(fp, "\n%s", alldomain);
         fclose(fp);
     }
     return 0;
